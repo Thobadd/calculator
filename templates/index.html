@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python BODMAS Calculator</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #121212; font-family: Arial, sans-serif; margin: 0; }
+        .calculator { background-color: #1e1e1e; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 320px; }
+        #screen { width: 100%; height: 60px; background-color: #2d2d2d; border: none; outline: none; color: #ffffff; font-size: 1.8rem; text-align: right; padding: 10px; box-sizing: border-box; border-radius: 8px; margin-bottom: 20px; }
+        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .btn { padding: 20px; font-size: 1.2rem; border: none; border-radius: 8px; background-color: #333333; color: white; cursor: pointer; }
+        .btn.operator { background-color: #ff9f0a; color: black; font-weight: bold; }
+        .btn.clear { background-color: #ff453a; }
+        .btn.equal { background-color: #30d158; color: black; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <!-- Display result from flask, or default to empty -->
+        <input type="text" id="screen" readonly value="{{ result if result is not none else '' }}" placeholder="0">
+        <div class="buttons">
+            <button class="btn clear" onclick="clearScreen()">C</button>
+            <button class="btn operator" onclick="press('(')">(</button>
+            <button class="btn operator" onclick="press(')')">)</button>
+            <button class="btn operator" onclick="press('^')">^</button>
+            
+            <button class="btn" onclick="press('7')">7</button>
+            <button class="btn" onclick="press('8')">8</button>
+            <button class="btn" onclick="press('9')">9</button>
+            <button class="btn operator" onclick="press('/')">/</button>
+            
+            <button class="btn" onclick="press('4')">4</button>
+            <button class="btn" onclick="press('5')">5</button>
+            <button class="btn" onclick="press('6')">6</button>
+            <button class="btn operator" onclick="press('*')">*</button>
+            
+            <button class="btn" onclick="press('1')">1</button>
+            <button class="btn" onclick="press('2')">2</button>
+            <button class="btn" onclick="press('3')">3</button>
+            <button class="btn operator" onclick="press('-')">-</button>
+            
+            <button class="btn" onclick="press('0')">0</button>
+            <button class="btn" onclick="press('.')">.</button>
+            <button class="btn equal" onclick="submitCalculation()">=</button>
+            <button class="btn operator" onclick="press('+')">+</button>
+        </div>
+    </div>
+
+    <!-- Hidden form to pass the expression string to the Python backend -->
+    <form id="calc-form" method="POST" action="/">
+        <input type="hidden" name="expression" id="form-expression">
+    </form>
+
+    <script>
+        const screen = document.getElementById('screen');
+        
+        function press(value) {
+            if(screen.value === "Cannot divide by zero" || screen.value === "Syntax Error" || screen.value === "Invalid input") {
+                screen.value = "";
+            }
+            screen.value += value;
+        }
+        
+        function clearScreen() { screen.value = ''; }
+        
+        function submitCalculation() {
+            document.getElementById('form-expression').value = screen.value;
+            document.getElementById('calc-form').submit();
+        }
+    </script>
+</body>
+</html>
