@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request
 import sympy as sp
+import re
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 template_dir = os.path.abspath(os.path.join(base_dir, '..', 'templates'))
@@ -18,8 +19,14 @@ def home():
         
         if user_input:
             try:
-                calc_str = user_input.replace('^', '**')
-                calc_str = calc_str.replace('π', 'pi')
+                # 1. Map visual button symbols to standard programming characters
+                calc_str = user_input.replace('×', '*').replace('÷', '/').replace('−', '-')
+                calc_str = calc_str.replace('^', '**').replace('π', 'pi')
+                
+                # 2. Automatically inject missing '*' for implied multiplication: e.g., 8(100) -> 8*(100)
+                calc_str = re.sub(r'(\d)(\()', r'\1*\2', calc_str) # Number before bracket
+                calc_str = re.sub(r'(\))(\d)', r'\1*\2', calc_str) # Number after bracket
+                calc_str = re.sub(r'(\))(\()', r'\1*\2', calc_str) # Side-by-side brackets: (2)(3) -> (2)*(3)
                 
                 expr = sp.sympify(calc_str)
                 
