@@ -1,73 +1,474 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python BODMAS Calculator</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculator</title>
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #121212; font-family: Arial, sans-serif; margin: 0; }
-        .calculator { background-color: #1e1e1e; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 320px; }
-        #screen { width: 100%; height: 60px; background-color: #2d2d2d; border: none; outline: none; color: #ffffff; font-size: 1.8rem; text-align: right; padding: 10px; box-sizing: border-box; border-radius: 8px; margin-bottom: 20px; }
-        .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .btn { padding: 20px; font-size: 1.2rem; border: none; border-radius: 8px; background-color: #333333; color: white; cursor: pointer; }
-        .btn.operator { background-color: #ff9f0a; color: black; font-weight: bold; }
-        .btn.clear { background-color: #ff453a; }
-        .btn.equal { background-color: #30d158; color: black; font-weight: bold; }
+      * {
+        box-sizing: border-box;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #121212;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .calculator-container {
+        background-color: #000000;
+        width: 100%;
+        max-width: 360px;
+        height: 680px;
+        border-radius: 32px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid #222;
+      }
+
+      /* Display Area */
+      .screen-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-end;
+        padding-bottom: 8px;
+        min-height: 140px;
+      }
+      #input-preview {
+        color: #888888;
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        word-break: break-all;
+        text-align: right;
+        width: 100%;
+        min-height: 1.5rem;
+      }
+      #screen {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 2.8rem;
+        text-align: right;
+        padding: 0;
+        word-break: break-all;
+      }
+
+      /* Control Utility Row */
+      .utility-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 4px;
+        border-bottom: 1px solid #1a1a1a;
+        margin-bottom: 16px;
+      }
+      .utility-left {
+        display: flex;
+        gap: 20px;
+      }
+      .util-btn {
+        background: none;
+        border: none;
+        padding: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+      }
+      .util-btn:hover {
+        opacity: 1;
+      }
+      .util-btn svg {
+        fill: #ffffff;
+        width: 22px;
+        height: 22px;
+      }
+
+      /* Main Keypad Grid */
+      .grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      /* Perfectly Circular Buttons */
+      .btn {
+        width: 68px;
+        height: 68px;
+        border-radius: 50%;
+        border: none;
+        font-size: 1.65rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: filter 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:active {
+        filter: brightness(1.3);
+      }
+
+      /* Strict Color Map Styling */
+      .btn.dark {
+        background-color: #1c1c1e;
+        color: #ffffff;
+      }
+      .btn.operator {
+        background-color: #2ed158;
+        color: #000000;
+        font-size: 1.9rem;
+      }
+      .btn.equal {
+        background-color: #2f80ed;
+        color: #000000;
+        font-size: 1.9rem;
+      }
+
+      /* Slide-up Dynamic History Panel Overlay */
+      .history-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 75%;
+        background-color: #1c1c1e;
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        padding: 20px;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+      }
+      .history-overlay.open {
+        transform: translateY(0);
+      }
+      .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .history-header h3 {
+        color: #ffffff;
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      .clear-history-btn {
+        background: none;
+        border: none;
+        color: #ff453a;
+        font-size: 0.95rem;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .history-list {
+        flex: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .history-item {
+        color: #e5e5ea;
+        padding: 12px 6px;
+        border-bottom: 1px solid #2c2c2e;
+        font-size: 1.05rem;
+        cursor: pointer;
+        text-align: right;
+        word-break: break-all;
+      }
+      .history-item:hover {
+        background-color: #2c2c2e;
+        border-radius: 8px;
+      }
+
+      /* Secondary Hidden Scientific Panel Block */
+      .scientific-panel {
+        display: none;
+        background-color: #121212;
+        padding: 10px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .scientific-panel.open {
+        display: grid;
+      }
+      .btn.sci-fn {
+        background-color: #2c2c2e;
+        color: #ff9f0a;
+        font-size: 1.15rem;
+        height: 48px;
+        border-radius: 24px;
+      }
     </style>
-</head>
-<body>
-    <div class="calculator">
-        <!-- Display result from flask, or default to empty -->
-        <input type="text" id="screen" readonly value="{{ result if result is not none else '' }}" placeholder="0">
-        <div class="buttons">
-            <button class="btn clear" onclick="clearScreen()">C</button>
-            <button class="btn operator" onclick="press('(')">(</button>
-            <button class="btn operator" onclick="press(')')">)</button>
-            <button class="btn operator" onclick="press('^')">^</button>
-            
-            <button class="btn" onclick="press('7')">7</button>
-            <button class="btn" onclick="press('8')">8</button>
-            <button class="btn" onclick="press('9')">9</button>
-            <button class="btn operator" onclick="press('/')">/</button>
-            
-            <button class="btn" onclick="press('4')">4</button>
-            <button class="btn" onclick="press('5')">5</button>
-            <button class="btn" onclick="press('6')">6</button>
-            <button class="btn operator" onclick="press('*')">*</button>
-            
-            <button class="btn" onclick="press('1')">1</button>
-            <button class="btn" onclick="press('2')">2</button>
-            <button class="btn" onclick="press('3')">3</button>
-            <button class="btn operator" onclick="press('-')">-</button>
-            
-            <button class="btn" onclick="press('0')">0</button>
-            <button class="btn" onclick="press('.')">.</button>
-            <button class="btn equal" onclick="submitCalculation()">=</button>
-            <button class="btn operator" onclick="press('+')">+</button>
+  </head>
+  <body>
+    <div class="calculator-container">
+      <!-- Display Screen -->
+      <div class="screen-container">
+        <div id="input-preview"></div>
+        <input type="text" id="screen" readonly value="" placeholder="0" />
+      </div>
+
+      <!-- Utility Buttons Row -->
+      <div class="utility-row">
+        <div class="utility-left">
+          <!-- History Clock Trigger Toggle Icon -->
+          <button
+            class="util-btn"
+            type="button"
+            onclick="toggleHistory()"
+            title="View History"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+                fill="white"
+              />
+            </svg>
+          </button>
+          <!-- Scientific Panel Toggler Icon -->
+          <button
+            class="util-btn"
+            type="button"
+            onclick="toggleScientific()"
+            title="Scientific Functions"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c0 1.1.9-2 2-2V5c0-1.1-.9-2-2-2zm-2 7h-2V8h2v2zm-4 0h-2V8h2v2zm-4 0H5V8h2v2zm0 4H5v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm2 3H5v-2h14v2z"
+                fill="white"
+              />
+            </svg>
+          </button>
         </div>
+        <!-- Backspace / Delete Icon (Aligned Right) -->
+        <button
+          class="util-btn"
+          type="button"
+          onclick="deleteLast()"
+          title="Delete Last"
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"
+              fill="white"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Optional Expandable Scientific Drawer Panel -->
+      <div class="scientific-panel" id="sci-drawer">
+        <button class="btn sci-fn" onclick="press('sin(')">sin</button>
+        <button class="btn sci-fn" onclick="press('cos(')">cos</button>
+        <button class="btn sci-fn" onclick="press('sqrt(')">√</button>
+        <button class="btn sci-fn" onclick="press('π')">π</button>
+      </div>
+
+      <!-- Main Keypad Circular Grid -->
+      <div class="grid-container">
+        <div class="row">
+          <button class="btn dark" onclick="clearScreen()">C</button>
+          <button class="btn dark" onclick="press('(')">(</button>
+          <button class="btn dark" onclick="press(')')">)</button>
+          <button class="btn operator" onclick="press('/')">÷</button>
+        </div>
+        <div class="row">
+          <button class="btn dark" onclick="press('7')">7</button>
+          <button class="btn dark" onclick="press('8')">8</button>
+          <button class="btn dark" onclick="press('9')">9</button>
+          <button class="btn operator" onclick="press('*')">×</button>
+        </div>
+        <div class="row">
+          <button class="btn dark" onclick="press('4')">4</button>
+          <button class="btn dark" onclick="press('5')">5</button>
+          <button class="btn dark" onclick="press('6')">6</button>
+          <button class="btn operator" onclick="press('-')">−</button>
+        </div>
+        <div class="row">
+          <button class="btn dark" onclick="press('1')">1</button>
+          <button class="btn dark" onclick="press('2')">2</button>
+          <button class="btn dark" onclick="press('3')">3</button>
+          <button class="btn operator" onclick="press('+')">+</button>
+        </div>
+        <div class="row">
+          <button
+            class="btn dark"
+            style="font-size: 1.3rem"
+            onclick="toggleSign()"
+          >
+            +/−
+          </button>
+          <button class="btn dark" onclick="press('0')">0</button>
+          <button class="btn dark" onclick="press('.')">.</button>
+          <button class="btn equal" onclick="submitCalculation()">=</button>
+        </div>
+      </div>
+
+      <!-- Slide-Up Active History Panel Overlay Box -->
+      <div class="history-overlay" id="history-overlay">
+        <div class="history-header">
+          <h3>Calculation History</h3>
+          <button class="clear-history-btn" onclick="clearHistory()">
+            Clear
+          </button>
+        </div>
+        <ul class="history-list" id="history-items"></ul>
+      </div>
     </div>
 
-    <!-- Hidden form to pass the expression string to the Python backend -->
-    <form id="calc-form" method="POST" action="/">
-        <input type="hidden" name="expression" id="form-expression">
-    </form>
-
     <script>
-        const screen = document.getElementById('screen');
-        
-        function press(value) {
-            if(screen.value === "Cannot divide by zero" || screen.value === "Syntax Error" || screen.value === "Invalid input") {
-                screen.value = "";
+      const screen = document.getElementById("screen");
+      const inputPreview = document.getElementById("input-preview");
+      const historyOverlay = document.getElementById("history-overlay");
+      const historyItems = document.getElementById("history-items");
+      const sciDrawer = document.getElementById("sci-drawer");
+
+      let historyLog = JSON.parse(localStorage.getItem("calc_history")) || [];
+      const errorMessages = [
+        "Cannot divide by zero",
+        "Syntax Error",
+        "Invalid input",
+        "Math Error (Complex)",
+      ];
+
+      function toggleHistory() {
+        historyOverlay.classList.toggle("open");
+      }
+
+      function toggleScientific() {
+        sciDrawer.classList.toggle("open");
+      }
+
+      function renderHistory() {
+        historyItems.innerHTML = "";
+        if (historyLog.length === 0) {
+          historyItems.innerHTML =
+            '<li style="color: #888; text-align: center; padding: 20px;">No calculation history</li>';
+          return;
+        }
+        historyLog.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "history-item";
+          li.innerText = item;
+          li.onclick = () => {
+            const parts = item.split(" = ");
+            if (parts.length > 0) {
+              screen.value = "";
+              inputPreview.innerText = parts[0];
             }
-            screen.value += value;
+            toggleHistory();
+          };
+          historyItems.appendChild(li);
+        });
+      }
+
+      function press(value) {
+        if (errorMessages.includes(screen.value)) {
+          screen.value = "";
         }
-        
-        function clearScreen() { screen.value = ''; }
-        
-        function submitCalculation() {
-            document.getElementById('form-expression').value = screen.value;
-            document.getElementById('calc-form').submit();
+        if (value === "*") {
+          inputPreview.innerText += "×";
+        } else if (value === "/") {
+          inputPreview.innerText += "÷";
+        } else {
+          inputPreview.innerText += value;
         }
+      }
+
+      function clearScreen() {
+        screen.value = "";
+        inputPreview.innerText = "";
+      }
+
+      function deleteLast() {
+        if (errorMessages.includes(screen.value)) {
+          clearScreen();
+          return;
+        }
+        let current = inputPreview.innerText;
+        if (current.endsWith("sin(") || current.endsWith("cos(")) {
+          inputPreview.innerText = current.slice(0, -4);
+        } else if (current.endsWith("sqrt(")) {
+          inputPreview.innerText = current.slice(0, -5);
+        } else {
+          inputPreview.innerText = current.slice(0, -1);
+        }
+      }
+
+      function toggleSign() {
+        let current = inputPreview.innerText;
+        if (current === "" || current === "0") return;
+        if (current.startsWith("-")) {
+          inputPreview.innerText = current.substring(1);
+        } else {
+          inputPreview.innerText = "-" + current;
+        }
+      }
+
+      function clearHistory() {
+        historyLog = [];
+        localStorage.setItem("calc_history", JSON.stringify(historyLog));
+        renderHistory();
+      }
+
+      function submitCalculation() {
+        let expr = inputPreview.innerText;
+        if (!expr || errorMessages.includes(screen.value)) return;
+
+        try {
+          expr = expr
+            .replace(/×/g, "*")
+            .replace(/÷/g, "/")
+            .replace(/π/g, Math.PI)
+            .replace(/sqrt/g, "Math.sqrt")
+            .replace(/sin/g, "Math.sin")
+            .replace(/cos/g, "Math.cos");
+          let result = eval(expr);
+          screen.value = result;
+
+          const logEntry = inputPreview.innerText + " = " + result;
+          historyLog.unshift(logEntry);
+          if (historyLog.length > 20) historyLog.pop();
+          localStorage.setItem("calc_history", JSON.stringify(historyLog));
+          renderHistory();
+        } catch (e) {
+          screen.value = "Error";
+        }
+      }
+
+      window.onload = function () {
+        renderHistory();
+      };
     </script>
-</body>
+  </body>
 </html>

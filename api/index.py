@@ -10,27 +10,35 @@ app = Flask(__name__, template_folder=template_dir)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     result = None
+    expression_str = ""
+    
     if request.method == 'POST':
         user_input = request.form.get('expression', '').strip()
+        expression_str = user_input
         
         if user_input:
             try:
-                expression_str = user_input.replace('^', '**')
-                expr = sp.sympify(expression_str)
+                calc_str = user_input.replace('^', '**')
+                calc_str = calc_str.replace('π', 'pi')
+                
+                expr = sp.sympify(calc_str)
                 
                 if expr.is_number:
-                    if expr in [sp.zoo, sp.oo, -sp.oo]:
-                        result = "Cannot divide by zero"
+                    if expr in [sp.zoo, sp.oo, -sp.oo] or sp.im(expr) != 0:
+                        if sp.im(expr) != 0:
+                            result = "Math Error (Complex)"
+                        else:
+                            result = "Cannot divide by zero"
                     else:
-                        res_val = float(expr)
-                        result = int(res_val) if res_val.is_integer() else res_val
+                        res_val = float(expr.evalf())
+                        result = int(res_val) if res_val.is_integer() else round(res_val, 8)
                 else:
                     result = "Invalid input"
                     
             except (sp.SympifyError, TypeError, ValueError, SyntaxError):
                 result = "Syntax Error"
                 
-    return render_template('index.html', result=result)
+    return render_template('index.html', result=result, expression=expression_str)
 
 if __name__ == '__main__':
     app.run(debug=True)
