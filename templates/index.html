@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Calculator</title>
     <style>
       * {
@@ -36,7 +39,45 @@
         border: 1px solid #222;
       }
 
-      /* Display Area */
+      @media (orientation: landscape) {
+        body {
+          padding: 10px;
+        }
+        .calculator-container {
+          max-width: 100%;
+          height: 100vh;
+          border-radius: 16px;
+          padding: 16px;
+        }
+        .screen-container {
+          min-height: 80px;
+        }
+        #input-preview {
+          font-size: 0.95rem;
+        }
+        #screen {
+          font-size: 2rem;
+        }
+        .grid-container {
+          gap: 10px;
+        }
+        .row {
+          gap: 10px;
+        }
+        .btn {
+          width: 56px;
+          height: 56px;
+          font-size: 1.4rem;
+        }
+        .btn.sci-fn {
+          height: 40px;
+          font-size: 0.95rem;
+        }
+        .history-overlay {
+          height: 90%;
+        }
+      }
+
       .screen-container {
         flex: 1;
         display: flex;
@@ -67,7 +108,6 @@
         word-break: break-all;
       }
 
-      /* Control Utility Row */
       .utility-row {
         display: flex;
         justify-content: space-between;
@@ -100,7 +140,26 @@
         height: 22px;
       }
 
-      /* Main Keypad Grid */
+      .mode-tabs {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #1a1a1a;
+        padding-bottom: 10px;
+      }
+      .mode-tab {
+        background: none;
+        border: none;
+        color: #888;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+      }
+      .mode-tab.active {
+        color: #2ed158;
+      }
+
       .grid-container {
         display: flex;
         flex-direction: column;
@@ -113,7 +172,6 @@
         gap: 14px;
       }
 
-      /* Perfectly Circular Buttons */
       .btn {
         width: 68px;
         height: 68px;
@@ -132,7 +190,6 @@
         filter: brightness(1.3);
       }
 
-      /* Strict Color Map Styling */
       .btn.dark {
         background-color: #1c1c1e;
         color: #ffffff;
@@ -148,7 +205,6 @@
         font-size: 1.9rem;
       }
 
-      /* Slide-up Dynamic History Panel Overlay */
       .history-overlay {
         position: absolute;
         bottom: 0;
@@ -208,7 +264,6 @@
         border-radius: 8px;
       }
 
-      /* Secondary Hidden Scientific Panel Block */
       .scientific-panel {
         display: none;
         background-color: #121212;
@@ -228,20 +283,65 @@
         height: 48px;
         border-radius: 24px;
       }
+
+      .converter-panel {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .converter-panel.open {
+        display: flex;
+      }
+      .converter-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .converter-tab {
+        background: none;
+        border: none;
+        color: #888;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+      .converter-tab.active {
+        color: #2ed158;
+        border-bottom: 2px solid #2ed158;
+      }
+      .input-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .input-group input {
+        flex: 1;
+        background: #1c1c1e;
+        color: #fff;
+        border: none;
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .input-group select {
+        background: #1c1c1e;
+        color: #fff;
+        border: none;
+        padding: 6px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div class="calculator-container">
-      <!-- Display Screen -->
       <div class="screen-container">
         <div id="input-preview"></div>
         <input type="text" id="screen" readonly value="" placeholder="0" />
       </div>
 
-      <!-- Utility Buttons Row -->
       <div class="utility-row">
         <div class="utility-left">
-          <!-- History Clock Trigger Toggle Icon -->
           <button
             class="util-btn"
             type="button"
@@ -255,7 +355,6 @@
               />
             </svg>
           </button>
-          <!-- Scientific Panel Toggler Icon -->
           <button
             class="util-btn"
             type="button"
@@ -270,7 +369,6 @@
             </svg>
           </button>
         </div>
-        <!-- Backspace / Delete Icon (Aligned Right) -->
         <button
           class="util-btn"
           type="button"
@@ -286,16 +384,71 @@
         </button>
       </div>
 
-      <!-- Optional Expandable Scientific Drawer Panel -->
+      <div class="mode-tabs">
+        <button class="mode-tab active" onclick="switchMode('calc')">
+          Calculator
+        </button>
+        <button class="mode-tab" onclick="switchMode('converter')">
+          Unit Converter
+        </button>
+      </div>
+
       <div class="scientific-panel" id="sci-drawer">
         <button class="btn sci-fn" onclick="press('sin(')">sin</button>
         <button class="btn sci-fn" onclick="press('cos(')">cos</button>
-        <button class="btn sci-fn" onclick="press('sqrt(')">√</button>
+        <button class="btn sci-fn" onclick="press('tan(')">tan</button>
         <button class="btn sci-fn" onclick="press('π')">π</button>
+        <button class="btn sci-fn" onclick="press('Rad(')">Rad</button>
+        <button class="btn sci-fn" onclick="press('sqrt(')">√</button>
+        <button class="btn sci-fn" onclick="press('ln(')">ln</button>
+        <button class="btn sci-fn" onclick="press('log(')">log</button>
+        <button class="btn sci-fn" onclick="press('1/')">1/x</button>
+        <button class="btn sci-fn" onclick="press('x²')">x²</button>
+        <button class="btn sci-fn" onclick="press('x^')">x^y</button>
+        <button class="btn sci-fn" onclick="press('e^(')">e^x</button>
+        <button class="btn sci-fn" onclick="press('abs(')">|x|</button>
       </div>
 
-      <!-- Main Keypad Circular Grid -->
-      <div class="grid-container">
+      <div class="converter-panel" id="converter-panel">
+        <div class="converter-tabs">
+          <button
+            class="converter-tab active"
+            onclick="switchConverter('area')"
+          >
+            Area
+          </button>
+          <button class="converter-tab" onclick="switchConverter('volume')">
+            Volume
+          </button>
+          <button class="converter-tab" onclick="switchConverter('length')">
+            Length
+          </button>
+          <button class="converter-tab" onclick="switchConverter('temp')">
+            Temperature
+          </button>
+        </div>
+        <div class="input-group">
+          <input
+            type="number"
+            id="conv-input"
+            placeholder="Enter value"
+            oninput="convertUnits()"
+          />
+          <select id="conv-from" onchange="convertUnits()">
+            <option value="ac">Acres</option>
+            <option value="m2">Square meters</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <input type="text" id="conv-output" readonly placeholder="Result" />
+          <select id="conv-to" onchange="convertUnits()">
+            <option value="m2">Square meters</option>
+            <option value="ac">Acres</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-container" id="calc-grid">
         <div class="row">
           <button class="btn dark" onclick="clearScreen()">C</button>
           <button class="btn dark" onclick="press('(')">(</button>
@@ -334,13 +487,21 @@
         </div>
       </div>
 
-      <!-- Slide-Up Active History Panel Overlay Box -->
       <div class="history-overlay" id="history-overlay">
         <div class="history-header">
           <h3>Calculation History</h3>
-          <button class="clear-history-btn" onclick="clearHistory()">
-            Clear
-          </button>
+          <div style="display: flex; gap: 12px">
+            <button class="clear-history-btn" onclick="clearHistory()">
+              Clear
+            </button>
+            <button
+              class="clear-history-btn"
+              style="color: #2ed158"
+              onclick="toggleHistory()"
+            >
+              Close
+            </button>
+          </div>
         </div>
         <ul class="history-list" id="history-items"></ul>
       </div>
@@ -352,14 +513,94 @@
       const historyOverlay = document.getElementById("history-overlay");
       const historyItems = document.getElementById("history-items");
       const sciDrawer = document.getElementById("sci-drawer");
+      const calcGrid = document.getElementById("calc-grid");
+      const converterPanel = document.getElementById("converter-panel");
 
       let historyLog = JSON.parse(localStorage.getItem("calc_history")) || [];
-      const errorMessages = [
-        "Cannot divide by zero",
-        "Syntax Error",
-        "Invalid input",
-        "Math Error (Complex)",
-      ];
+      let currentMode = "calc";
+      let currentConverter = "area";
+
+      const conversions = {
+        area: { ac: 4046.86, m2: 1 },
+        volume: { l: 1, ml: 0.001 },
+        length: { m: 1, km: 1000, cm: 0.01, mm: 0.001 },
+        temp: null,
+      };
+
+      function switchMode(mode) {
+        currentMode = mode;
+        document
+          .querySelectorAll(".mode-tab")
+          .forEach((t) => t.classList.remove("active"));
+        event.target.classList.add("active");
+
+        if (mode === "calc") {
+          calcGrid.style.display = "flex";
+          converterPanel.style.display = "none";
+          sciDrawer.classList.remove("open");
+        } else {
+          calcGrid.style.display = "none";
+          converterPanel.style.display = "flex";
+          sciDrawer.classList.remove("open");
+        }
+      }
+
+      function switchConverter(type) {
+        currentConverter = type;
+        document
+          .querySelectorAll(".converter-tab")
+          .forEach((t) => t.classList.remove("active"));
+        event.target.classList.add("active");
+
+        const fromSelect = document.getElementById("conv-from");
+        const toSelect = document.getElementById("conv-to");
+
+        if (type === "area") {
+          fromSelect.innerHTML =
+            '<option value="ac">Acres</option><option value="m2">Square meters</option>';
+          toSelect.innerHTML =
+            '<option value="m2">Square meters</option><option value="ac">Acres</option>';
+        } else if (type === "volume") {
+          fromSelect.innerHTML =
+            '<option value="l">Liters</option><option value="ml">Milliliters</option>';
+          toSelect.innerHTML =
+            '<option value="ml">Milliliters</option><option value="l">Liters</option>';
+        } else if (type === "length") {
+          fromSelect.innerHTML =
+            '<option value="m">Meters</option><option value="km">Kilometers</option><option value="cm">Centimeters</option>';
+          toSelect.innerHTML =
+            '<option value="cm">Centimeters</option><option value="m">Meters</option><option value="km">Kilometers</option>';
+        } else if (type === "temp") {
+          fromSelect.innerHTML =
+            '<option value="c">Celsius</option><option value="f">Fahrenheit</option>';
+          toSelect.innerHTML =
+            '<option value="f">Fahrenheit</option><option value="c">Celsius</option>';
+        }
+        convertUnits();
+      }
+
+      function convertUnits() {
+        const input = parseFloat(document.getElementById("conv-input").value);
+        if (isNaN(input)) {
+          document.getElementById("conv-output").value = "";
+          return;
+        }
+
+        const from = document.getElementById("conv-from").value;
+        const to = document.getElementById("conv-to").value;
+        let result;
+
+        if (currentConverter === "temp") {
+          if (from === "c" && to === "f") result = (input * 9) / 5 + 32;
+          else if (from === "f" && to === "c") result = ((input - 32) * 5) / 9;
+          else result = input;
+        } else {
+          const conv = conversions[currentConverter];
+          result = (input * conv[from]) / conv[to];
+        }
+
+        document.getElementById("conv-output").value = result.toFixed(4);
+      }
 
       function toggleHistory() {
         historyOverlay.classList.toggle("open");
@@ -393,16 +634,9 @@
       }
 
       function press(value) {
-        if (errorMessages.includes(screen.value)) {
-          screen.value = "";
-        }
-        if (value === "*") {
-          inputPreview.innerText += "×";
-        } else if (value === "/") {
-          inputPreview.innerText += "÷";
-        } else {
-          inputPreview.innerText += value;
-        }
+        if (value === "*") inputPreview.innerText += "×";
+        else if (value === "/") inputPreview.innerText += "÷";
+        else inputPreview.innerText += value;
       }
 
       function clearScreen() {
@@ -411,15 +645,22 @@
       }
 
       function deleteLast() {
-        if (errorMessages.includes(screen.value)) {
-          clearScreen();
-          return;
-        }
         let current = inputPreview.innerText;
-        if (current.endsWith("sin(") || current.endsWith("cos(")) {
+        if (
+          current.endsWith("sin(") ||
+          current.endsWith("cos(") ||
+          current.endsWith("tan(")
+        ) {
           inputPreview.innerText = current.slice(0, -4);
-        } else if (current.endsWith("sqrt(")) {
+        } else if (
+          current.endsWith("sqrt(") ||
+          current.endsWith("Rad(") ||
+          current.endsWith("e^(") ||
+          current.endsWith("abs(")
+        ) {
           inputPreview.innerText = current.slice(0, -5);
+        } else if (current.endsWith("log(") || current.endsWith("ln(")) {
+          inputPreview.innerText = current.slice(0, -4);
         } else {
           inputPreview.innerText = current.slice(0, -1);
         }
@@ -443,7 +684,7 @@
 
       function submitCalculation() {
         let expr = inputPreview.innerText;
-        if (!expr || errorMessages.includes(screen.value)) return;
+        if (!expr) return;
 
         try {
           expr = expr
@@ -452,7 +693,15 @@
             .replace(/π/g, Math.PI)
             .replace(/sqrt/g, "Math.sqrt")
             .replace(/sin/g, "Math.sin")
-            .replace(/cos/g, "Math.cos");
+            .replace(/cos/g, "Math.cos")
+            .replace(/tan/g, "Math.tan")
+            .replace(/ln/g, "Math.log")
+            .replace(/log/g, "Math.log10")
+            .replace(/e\^/g, "Math.exp")
+            .replace(/x²/g, "**2")
+            .replace(/x\^/g, "**")
+            .replace(/abs/g, "Math.abs")
+            .replace(/1\//g, "1/");
           let result = eval(expr);
           screen.value = result;
 
