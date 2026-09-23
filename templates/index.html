@@ -6,18 +6,38 @@
     <title>Python BODMAS Calculator</title>
     <style>
         body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #121212; font-family: Arial, sans-serif; margin: 0; }
-        .calculator { background-color: #1e1e1e; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 320px; }
+        
+        /* Calculator box layout wrapper */
+        .calculator { background-color: #1e1e1e; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 320px; position: relative; overflow: hidden; }
+        
         #screen { width: 100%; height: 60px; background-color: #2d2d2d; border: none; outline: none; color: #ffffff; font-size: 1.8rem; text-align: right; padding: 10px; box-sizing: border-box; border-radius: 8px; }
         
-        /* Utility container directly below the screen */
-        .utility-row { display: flex; justify-content: flex-end; margin: 10px 0 15px 0; }
+        /* Utility button row layout containing the panel triggers */
+        .utility-row { display: flex; justify-content: flex-end; margin: 10px 0 15px 0; gap: 10px; }
         
         .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
         .btn { padding: 20px; font-size: 1.2rem; border: none; border-radius: 8px; background-color: #333333; color: white; cursor: pointer; }
         .btn.operator { background-color: #ff9f0a; color: black; font-weight: bold; }
         .btn.clear { background-color: #ff453a; }
-        .btn.delete { background-color: #545456; color: white; padding: 10px 20px; font-size: 1rem; font-weight: bold; }
+        .btn.delete { background-color: #545456; color: white; padding: 10px 15px; font-size: 1rem; font-weight: bold; }
+        .btn.history-trigger { background-color: #0a84ff; color: white; padding: 10px 15px; font-size: 1rem; font-weight: bold; }
         .btn.equal { background-color: #30d158; color: black; font-weight: bold; }
+        
+        /* Slide-up active history ledger dashboard container */
+        .history-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #1c1c1e; padding: 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.76, 0.55, 0.94); z-index: 10; display: flex; flex-direction: column; border-radius: 16px; }
+        .history-overlay.open { transform: translateY(0); }
+        
+        .history-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+        .history-header h3 { color: #ffffff; margin: 0; font-size: 1.2rem; }
+        
+        .history-actions { display: flex; gap: 10px; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .btn-action.back { background-color: #48484a; color: white; }
+        .btn-action.clear-log { background-color: #ff453a; color: white; }
+        
+        .history-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; }
+        .history-item { padding: 12px 8px; border-bottom: 1px solid #2c2c2e; color: #b3b3b3; text-align: right; font-size: 1.1rem; cursor: pointer; word-break: break-all; transition: background 0.2s, color 0.2s; }
+        .history-item:hover { background-color: #2c2c2e; color: #ffffff; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -25,8 +45,9 @@
         <!-- Display result from flask, or default to empty -->
         <input type="text" id="screen" readonly value="{{ result if result is not none else '' }}" placeholder="0">
         
-        <!-- Utility row containing the DEL button right below the screen -->
+        <!-- Utility row containing both the History and DEL buttons right below the screen -->
         <div class="utility-row">
+            <button class="btn history-trigger" onclick="toggleHistory(true)">HIST</button>
             <button class="btn delete" onclick="deleteLast()">DEL</button>
         </div>
 
@@ -56,17 +77,92 @@
             <button class="btn equal" onclick="submitCalculation()">=</button>
             <button class="btn operator" onclick="press('+')">+</button>
         </div>
+
+        <!-- Slide-Up Navigation Overlay Layout Screen Panel -->
+        <div class="history-overlay" id="history-overlay">
+            <div class="history-header">
+                <h3>History</h3>
+                <div class="history-actions">
+                    <button class="btn-action back" onclick="toggleHistory(false)">Back</button>
+                    <button class="btn-action clear-log" onclick="clearHistory()">Clear</button>
+                </div>
+            </div>
+            <ul class="history-list" id="history-items"></ul>
+        </div>
     </div>
 
     <!-- Hidden form to pass the expression string to the Python backend -->
     <form id="calc-form" method="POST" action="/">
         <input type="hidden" name="expression" id="form-expression">
+        <input type="hidden" name="last_expression" id="form-last-expression">
     </form>
 
     <script>
         const screen = document.getElementById('screen');
+        const historyOverlay = document.getElementById('history-overlay');
+        const historyItems = document.getElementById('history-items');
+        
+        let historyLog = JSON.parse(localStorage.getItem('calc_history')) || [];
         const errorMessages = ["Cannot divide by zero", "Syntax Error", "Invalid input", "Math Error (Complex)"];
         
+        // Setup initial configuration states on browser refresh lifecycle hook
+        window.onload = function() {
+            renderHistory();
+            
+            const currentResult = "{{ result if result is not none else '' }}";
+            const lastExpr = localStorage.getItem('last_pending_expr');
+            
+            // Check if backend returned a structural numerical result token
+            if (currentResult && lastExpr) {
+                localStorage.removeItem('last_pending_expr');
+                
+                if (!errorMessages.includes(currentResult)) {
+                    const logEntry = `${lastExpr} = ${currentResult}`;
+                    historyLog.unshift(logEntry);
+                    if (historyLog.length > 30) historyLog.pop(); // Keep list size optimized
+                    localStorage.setItem('calc_history', JSON.stringify(historyLog));
+                    renderHistory();
+                }
+            }
+        };
+
+        function toggleHistory(show) {
+            if (show) {
+                renderHistory();
+                historyOverlay.classList.add('open');
+            } else {
+                historyOverlay.classList.remove('open');
+            }
+        }
+
+        function renderHistory() {
+            historyItems.innerHTML = '';
+            if (historyLog.length === 0) {
+                historyItems.innerHTML = '<li style="text-align:center; padding:30px; color:#666; list-style:none;">No history available</li>';
+                return;
+            }
+            historyLog.forEach((item) => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerText = item;
+                // Clicking an element drops the left-side calculation directly into your display screen text field
+                li.onclick = () => {
+                    const parts = item.split(' = ');
+                    if (parts.length > 0) {
+                        screen.value = parts[0];
+                    }
+                    toggleHistory(false);
+                };
+                historyItems.appendChild(li);
+            });
+        }
+
+        function clearHistory() {
+            historyLog = [];
+            localStorage.setItem('calc_history', JSON.stringify(historyLog));
+            renderHistory();
+        }
+
         function press(value) {
             if(errorMessages.includes(screen.value)) {
                 screen.value = "";
@@ -86,6 +182,10 @@
         
         function submitCalculation() {
             if (!screen.value || errorMessages.includes(screen.value)) return;
+            
+            // Hold equation string value locally before sending to the background routes
+            localStorage.setItem('last_pending_expr', screen.value);
+            
             document.getElementById('form-expression').value = screen.value;
             document.getElementById('calc-form').submit();
         }
